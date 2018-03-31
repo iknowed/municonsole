@@ -1,0 +1,33 @@
+import psycopg2
+import math
+
+db = psycopg2.connect("dbname=municonsole user=muni password=mta host=cybre.net")
+sql = "select id,tag from route";
+
+cur = db.cursor()
+cur.execute(sql)
+for route in cur.fetchall():
+  route_id = route[0]
+  route_tag = route[0]
+  print route_tag
+  cur = db.cursor()
+  sql = "select distinct(d.tag),r.tag,r.id from route r, direction d where r.id = d.route_id and r.id="+str(route_id)+" order by r.id"
+  cur.execute(sql)
+  directions = cur.fetchall()
+  for direction in directions:
+    dir_tag = direction[0]
+    print dir_tag
+    route_tag = direction[1]
+    for datype in range(0,3):
+      for hour in range(0,24):
+        route_id = route[0]
+        sql = "select distinct(p.id) from path p, route r, direction d where r.id = d.route_id and d.tag = %s and p.route_id=r.id order by p.id"
+        cur = db.cursor()
+        cur.execute(sql,(dir_tag,))
+        for path in cur.fetchall():
+          path_id = path[0]
+          sql = "insert into speed (route_tag,dir_tag,path_id,hour,datype,speed,min,max,navg) values (%s,%s,%s,%s,%s,0.0,666,-666,0)"
+          cur = db.cursor()
+          cur.execute(sql,(route_tag,dir_tag,path_id,hour,datype))
+          db.commit()
+
